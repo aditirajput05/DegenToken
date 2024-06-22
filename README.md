@@ -43,9 +43,7 @@ After the contract is deployed, you can perform the following operations in it:
 
 
 ## Help
-Certain errors may occur while verification of the contract for taht we have to keep in mind that the solidity version specified in the contract, the version in the solidity compiler and one chosen while verifying should be same.
-
-Apart from it we also have to flatten the file because the JSON format has to be adaptible as normal import statements are not compatible in the verification portal.
+If you encounter any issues while interacting with the contract, ensure that your environment is configured correctly with the necessary Ethereum network or testnet. Verify the Solidity compiler version compatibility and contract deployment details.
 
 ## Authors
 
