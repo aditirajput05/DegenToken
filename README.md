@@ -2,34 +2,38 @@
 This is a smart contract in the form of a token for Degen Gaming, where several functionalities can be performed.
 
 ## Description
-With the help of this smart contract, we can mint tokens, transfer them from one address to another, burn them, and also redeem merchandise from Degen Gaming over a decentralized network. The working of the contract is verified on the Avalanche Fuji Test Network, and the verification is done on Snowtrace Testnet.
-
+DegenGamingToken is an ERC20 token contract built with Solidity. It includes additional functionality for categorizing tokens into different types such as sun, water, wind, and moon tokens. This contract is designed to be used in gaming applications where different categories of tokens can be redeemed and transferred.
 ## Getting Started
 ### Installing
 You can download the DegenGamingToken.sol file and then compile it in Remix. Choose the Environment as Injected Provider - Metamask and deploy the contract.
 
 ### Executing program
 
-Follow these steps to deploy and verify the contract:
+Steps to be followed in order to run the contract seamlessly:
 
-1. Configure Metamask for Avalanche Fuji C-Chain:
-   - **Network Name**: Avalanche Fuji C-Chain
-   - **New RPC URL**: https://api.avax-test.network/ext/bc/C/rpc
-   - **ChainID**: 43113
-   - **Symbol**: AVAX
-   - **Explorer**: https://testnet.snowtrace.io/
+#### Creating a Test Network in MetaMask:
+##### Network Configuration:
 
-2. Obtain test AVAX tokens through the Avalanche faucet or testing avenues provided by Avalanche.
+Network Name: Avalanche Fuji C-Chain
+New RPC URL: https://api.avax-test.network/ext/bc/C/rpc
+ChainID: 43113
+Symbol: AVAX
+Explorer: https://testnet.snowtrace.io/
+##### Getting Test AVAX Tokens:
 
-3. Deploy the compiled `DegenToken.sol` contract using Remix with Metamask injected provider.
+Visit Avalanche Faucet to get free AVAX testnet tokens. A coupon code is required to get tokens.
+The coupon code can be easily redeemed through the Guild by completing some simple steps.
+Enter the generated secret code in the coupon code field and the address of your MetaMask account on the Avalanche Fuji Network.
+You will receive 0.5 AVAX in your MetaMask wallet on the Avalanche Fuji Network, which will help test the smart contract.
+##### Deploying the Contract:
 
-4. Flatten the solidity file and download the flattened file.
+Open Remix, choose the environment as Injected Provider - MetaMask, and deploy the contract.
+Copy the address of the deployed contract, paste it into SnowTrace Testnet, and click on verify and publish contracts.
+Select the chain as Fuji, enter the address of the new contract, and select the compiler version mentioned in the Solidity file.
+Upload the Solidity file downloaded from Remix and click on verify.
+##### Performing Transactions:
 
-5. Verify the contract on Snowtrace Testnet:
-   - Paste the deployed contract address.
-   - Choose Avalanche Fuji as the chain.
-   - Select the compiler version specified in the solidity file.
-   - Upload the flattened solidity file and verify.
+Once the contract is verified, transactions performed in the contract will be logged in SnowTrace.
      
 ## Working
 After the contract is deployed, you can perform the following operations in it:
@@ -48,7 +52,7 @@ If you encounter any issues while interacting with the contract, ensure that you
 ## Authors
 
 Aditi Rajput
-[@Chandigarh University](https://www.linkedin.com/in/aditi-rajput-b9360720b/)
+[@Linkdin](https://www.linkedin.com/in/aditi-rajput-b9360720b/)
 
 
 ## License
