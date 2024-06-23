@@ -1,76 +1,33 @@
-pragma solidity ^0.8.0;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
 
-// SPDX-License-Identifier: UNLICENSED
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract DegenGamingToken {
-    string public name = "Degen Gaming Token";
-    string public symbol = "DGT";
-    uint8 public decimals = 18;
-    uint256 public totalSupply;
-
-    mapping(address => uint256) public balanceOf;
-    mapping(address => mapping(address => uint256)) public allowance;
-    address public owner;
-
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-    event Mint(address indexed to, uint256 value);
-    event Burn(address indexed from, uint256 value);
-    event Redeem(address indexed from, uint256 value, string category);
-
-    uint256 public participationFee = 100; // Number of tokens required to participate in the ring game
-    uint256 public bonusTokens = 500; // Number of bonus tokens the winner receives
-
-    // The address of the current winner of the ring game
-    address public currentWinner;
-    // Flag to determine if a game is currently in progress
-    bool public gameInProgress;
-
-    // Event to announce the winner of the ring game
-    event WinnerAnnounced(address indexed winner, uint256 bonusTokens);
-
+contract DegenGamingToken is ERC20, Ownable {
     // Mapping of category token balances
     mapping(address => uint256) public sunTokens;
     mapping(address => uint256) public waterTokens;
     mapping(address => uint256) public windTokens;
     mapping(address => uint256) public moonTokens;
 
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Only the owner can call this function");
-        _;
+    event Redeem(address indexed from, uint256 value, string category);
+    event Burn(address indexed from, uint256 value);
+    function decimals() public pure override returns (uint8) {
+    return 2; // or any other value you want
+}
+
+    constructor(uint256 initialSupply) ERC20("Degen Gaming Token", "DGT") Ownable(msg.sender) {
+        _mint(msg.sender, initialSupply * 10**decimals());
     }
 
-    constructor(uint256 initialSupply) {
-        totalSupply = initialSupply * 10**uint256(decimals);
-        balanceOf[msg.sender] = totalSupply;
-        owner = msg.sender;
-    }
-
-    function mint(address to, uint256 value) public onlyOwner {
+    function mint(address to, uint256 value) external onlyOwner {
         require(to!= address(0), "Invalid address");
-        totalSupply += value;
-        balanceOf[to] += value;
-        emit Mint(to, value);
+        _mint(to, value);
     }
 
-    function transfer(address to, uint256 value) public returns (bool) {
-        require(to!= address(0), "Invalid address");
-        require(value <= balanceOf[msg.sender], "Insufficient balance");
-
-        balanceOf[msg.sender] -= value;
-        balanceOf[to] += value;
-        emit Transfer(msg.sender, to, value);
-        return true;
-    }
-
-    function approve(address spender, uint256 value) public returns (bool) {
-        allowance[msg.sender][spender] = value;
-        emit Approval(msg.sender, spender, value);
-        return true;
-    }
-
-    function redeemTokens(uint256 value, string memory category) public {
-        require(value <= balanceOf[msg.sender], "Insufficient balance");
+    function redeemTokens(uint256 value, string memory category) external {
+        require(value <= this.balanceOf(msg.sender), "Insufficient balance");
         if (keccak256(abi.encodePacked(category)) == keccak256(abi.encodePacked("sun"))) {
             require(sunTokens[msg.sender] >= 2000, "Not enough moon tokens to redeem sun token");
             sunTokens[msg.sender] -= 2000;
@@ -84,27 +41,33 @@ contract DegenGamingToken {
             require(moonTokens[msg.sender] >= 800, "Not enough water tokens to redeem moon token");
             moonTokens[msg.sender] -= 800;
         }
-        balanceOf[msg.sender] -= value;
+        _burn(msg.sender, value);
         emit Redeem(msg.sender, value, category);
     }
 
-    function burnTokens(uint256 value, string memory category) public {
-        require(value <= balanceOf[msg.sender], "Insufficient balance");
-        if (keccak256(abi.encodePacked(category)) == keccak256(abi.encodePacked("sun"))) {
-            sunTokens[msg.sender] += value;
-        } else if (keccak256(abi.encodePacked(category)) == keccak256(abi.encodePacked("water"))) {
-            waterTokens[msg.sender] += value;
-        } else if (keccak256(abi.encodePacked(category)) == keccak256(abi.encodePacked("wind"))) {
-            windTokens[msg.sender] += value;
-        } else if (keccak256(abi.encodePacked(category)) == keccak256(abi.encodePacked("moon"))) {
-            moonTokens[msg.sender] += value;
-        }
-        balanceOf[msg.sender] -= value;
-        emit Burn(msg.sender, value); // Corrected here
+    function playerTransfer(uint256 value, string memory category) public {
+    require(value <= this.balanceOf(msg.sender), "Insufficient balance");
+    if (keccak256(abi.encodePacked(category)) == keccak256(abi.encodePacked("sun"))) {
+        sunTokens[msg.sender] += value;
+    } else if (keccak256(abi.encodePacked(category)) == keccak256(abi.encodePacked("water"))) {
+        waterTokens[msg.sender] += value;
+    } else if (keccak256(abi.encodePacked(category)) == keccak256(abi.encodePacked("wind"))) {
+        windTokens[msg.sender] += value;
+    } else if (keccak256(abi.encodePacked(category)) == keccak256(abi.encodePacked("moon"))) {
+        moonTokens[msg.sender] += value;
+    }
+    _transfer(msg.sender, address(this), value);
+    emit Transfer(msg.sender, address(this), value);
+}
+
+    function burn(uint256 value) public {
+        require(value <= this.balanceOf(msg.sender), "Insufficient balance");
+        _burn(msg.sender, value);
+        emit Burn(msg.sender, value);
     }
 
-    function checkBalance(address account) public view returns (uint256) {
-        return balanceOf[account];
+    function checkTokenBalance(address account) public view returns (uint256) {
+        return this.balanceOf(account);
     }
 
     function checkCategoryBalance(address account, string memory category) public view returns (uint256) {
