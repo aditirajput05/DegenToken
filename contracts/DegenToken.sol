@@ -3,83 +3,103 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
-contract DegenGamingToken is ERC20, Ownable {
-    // Mapping of category token balances
-    mapping(address => uint256) public sunTokens;
-    mapping(address => uint256) public waterTokens;
-    mapping(address => uint256) public windTokens;
-    mapping(address => uint256) public moonTokens;
+contract ElementalToken is ERC20, Ownable, ERC20Burnable {
 
-    event Redeem(address indexed from, uint256 value, string category);
-    event Burn(address indexed from, uint256 value);
-    function decimals() public pure override returns (uint8) {
-    return 2; // or any other value you want
+    event TokensRedeemed(address indexed redeemer, uint256 amount, string reward);
+    event HomageClanEarned(address indexed player, uint256 amount, string badge);
+
+    mapping(address => string[]) public inventory;
+
+    constructor() ERC20("Elemental", "ELM") Ownable(msg.sender) {}
+
+    function mint(address to, uint256 amount) public onlyOwner {
+        _mint(to, amount);
+    }
+
+    function getBalance() external view returns (uint256) {
+    return balanceOf(msg.sender);
 }
 
-    constructor(uint256 initialSupply) ERC20("Degen Gaming Token", "DGT") Ownable(msg.sender) {
-        _mint(msg.sender, initialSupply * 10**decimals());
+    function approve(address spender, uint256 amount) public virtual override returns (bool) {
+        _approve(msg.sender, spender, amount);
+        return true;
     }
 
-    function mint(address to, uint256 value) external onlyOwner {
-        require(to!= address(0), "Invalid address");
-        _mint(to, value);
+    function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
+        require(balanceOf(msg.sender) >= amount, "ERC20: transfer amount exceeds balance");
+        _transfer(msg.sender, recipient, amount);
+        return true;
     }
 
-    function redeemTokens(uint256 value, string memory category) external {
-        require(value <= this.balanceOf(msg.sender), "Insufficient balance");
-        if (keccak256(abi.encodePacked(category)) == keccak256(abi.encodePacked("sun"))) {
-            require(sunTokens[msg.sender] >= 2000, "Not enough moon tokens to redeem sun token");
-            sunTokens[msg.sender] -= 2000;
-        } else if (keccak256(abi.encodePacked(category)) == keccak256(abi.encodePacked("water"))) {
-            require(waterTokens[msg.sender] >= 1500, "Not enough wind tokens to redeem water token");
-            waterTokens[msg.sender] -= 1500;
-        } else if (keccak256(abi.encodePacked(category)) == keccak256(abi.encodePacked("wind"))) {
-            require(windTokens[msg.sender] >= 1000, "Not enough sun tokens to redeem wind token");
-            windTokens[msg.sender] -= 1000;
-        } else if (keccak256(abi.encodePacked(category)) == keccak256(abi.encodePacked("moon"))) {
-            require(moonTokens[msg.sender] >= 800, "Not enough water tokens to redeem moon token");
-            moonTokens[msg.sender] -= 800;
+    function transferFrom(address sender, address recipient, uint256 amount) public virtual override returns (bool) {
+        require(balanceOf(sender) >= amount, "ERC20: transfer amount exceeds balance");
+        uint256 currentAllowance = allowance(sender, msg.sender);
+        require(currentAllowance >= amount, "ERC20: transfer amount exceeds allowance");
+        unchecked {
+            _approve(sender, msg.sender, currentAllowance - amount);
         }
-        _burn(msg.sender, value);
-        emit Redeem(msg.sender, value, category);
+        _transfer(sender, recipient, amount);
+        return true;
     }
 
-    function playerTransfer(uint256 value, string memory category) public {
-    require(value <= this.balanceOf(msg.sender), "Insufficient balance");
-    if (keccak256(abi.encodePacked(category)) == keccak256(abi.encodePacked("sun"))) {
-        sunTokens[msg.sender] += value;
-    } else if (keccak256(abi.encodePacked(category)) == keccak256(abi.encodePacked("water"))) {
-        waterTokens[msg.sender] += value;
-    } else if (keccak256(abi.encodePacked(category)) == keccak256(abi.encodePacked("wind"))) {
-        windTokens[msg.sender] += value;
-    } else if (keccak256(abi.encodePacked(category)) == keccak256(abi.encodePacked("moon"))) {
-        moonTokens[msg.sender] += value;
-    }
-    _transfer(msg.sender, address(this), value);
-    emit Transfer(msg.sender, address(this), value);
-}
+    function redeemTokens(address _redeemer, uint256 _amount) external {
+        require(balanceOf(_redeemer) >= _amount, "The specified address does not have enough Elemental Tokens to redeem this reward");
 
-    function burn(uint256 value) public {
-        require(value <= this.balanceOf(msg.sender), "Insufficient balance");
-        _burn(msg.sender, value);
-        emit Burn(msg.sender, value);
-    }
-
-    function checkTokenBalance(address account) public view returns (uint256) {
-        return this.balanceOf(account);
-    }
-
-    function checkCategoryBalance(address account, string memory category) public view returns (uint256) {
-        if (keccak256(abi.encodePacked(category)) == keccak256(abi.encodePacked("sun"))) {
-            return sunTokens[account];
-        } else if (keccak256(abi.encodePacked(category)) == keccak256(abi.encodePacked("water"))) {
-            return waterTokens[account];
-        } else if (keccak256(abi.encodePacked(category)) == keccak256(abi.encodePacked("wind"))) {
-            return windTokens[account];
-        } else if (keccak256(abi.encodePacked(category)) == keccak256(abi.encodePacked("moon"))) {
-            return moonTokens[account];
+        string memory reward;
+        if (_amount == 300) {
+            reward = "Earth Elemental Box";
+        } else if (_amount == 200) {
+            reward = "Water Elemental Box";
+        } else if (_amount == 100) {
+            reward = "Wind Elemental Box";
+        } else if (_amount == 50) {
+            reward = "Fire Elemental Box";
+        } else {
+            revert("Not enough tokens for any reward");
         }
-        return 0;
+
+        _burn(_redeemer, _amount);
+        inventory[_redeemer].push(reward);
+        emit TokensRedeemed(_redeemer, _amount, reward);
+    }
+
+    function earnHomageClan(address _player, uint256 _amount) external {
+        require(balanceOf(_player) >= _amount, "The specified address does not have enough Elemental Tokens to earn this badge");
+
+        string memory clan;
+        if (_amount == 80) {
+            clan = "Earth Elemental Clan";
+        } else if (_amount == 60) {
+            clan = "Water Elemental Clan";
+        } else if (_amount == 40) {
+            clan = "Wind Elemental Clan";
+        } else if (_amount == 20) {
+            clan = "Fire Elemental Clan";
+        } else {
+            revert("Not enough tokens for any Clan");
+        }
+
+        _burn(_player, _amount);
+        inventory[_player].push(clan);
+        emit HomageClanEarned(_player, _amount, clan);
+    }
+
+    function getInventory(address _owner) external view returns (string[] memory) {
+        return inventory[_owner];
+    }
+
+    function redeemRules() external pure returns (string memory) {
+        return "Homage Clan:\n"
+               "20 ELM - Fire Elemental Clan\n"
+               "40 ELM - Wind Elemental Clan\n"
+               "60 ELM - Water Elemental Clan\n"
+               "80 ELM - Earth Elemental Clan\n\n"
+               "Elemental Kingdom:\n"
+               "50 ELM - Fire Elemental Box\n"
+               "100 ELM - Wind Elemental Box\n"
+               "200 ELM - Water Elemental Box\n"
+               "300 ELM - Earth Elemental Box";
     }
 }
