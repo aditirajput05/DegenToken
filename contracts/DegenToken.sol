@@ -17,6 +17,10 @@ contract ElementalToken is ERC20, Ownable, ERC20Burnable {
     function mint(address to, uint256 amount) public onlyOwner {
         _mint(to, amount);
     }
+    function burnTokens(uint256 _value) external {
+        require(balanceOf(msg.sender) >= _value, "You do not have enough Degen Tokens");
+        burn(_value);
+    }
 
     function getBalance() external view returns (uint256) {
     return balanceOf(msg.sender);
